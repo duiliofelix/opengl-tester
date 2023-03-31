@@ -1,28 +1,23 @@
-use gl::types::{GLenum, GLsizeiptr, GLuint};
-use std::{mem, ptr};
+use gl::types::{GLenum, GLsizeiptr, GLuint, GLvoid};
+use std::mem;
 
-pub struct Buffer<T> {
+pub struct Buffer {
     id: GLuint,
     buffer_type: GLenum,
-    phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> Buffer<T> {
-    pub fn new(buffer_type: GLenum) -> Buffer<T> {
+impl Buffer {
+    pub fn new(buffer_type: GLenum) -> Buffer {
         let mut id: GLuint = 0;
 
         unsafe {
             gl::GenBuffers(1, &mut id);
         }
 
-        Buffer {
-            id,
-            buffer_type,
-            phantom: std::marker::PhantomData,
-        }
+        Buffer { id, buffer_type }
     }
 
-    pub fn load_data(&mut self, data: Vec<T>) {
+    pub fn load_data<T>(&mut self, data: Vec<T>) {
         let type_size = mem::size_of::<T>();
 
         unsafe {
@@ -36,17 +31,13 @@ impl<T> Buffer<T> {
         }
     }
 
-    pub fn set_attrib_format() {
+    pub fn set_attrib_format<T>(index: u32, size: i32, total_size: usize, start_pos: usize) {
+        let mem_size = (total_size * mem::size_of::<T>()) as i32;
+        let start_mem = (start_pos * mem::size_of::<T>()) as *const GLvoid;
+
         unsafe {
-            gl::VertexAttribPointer(
-                0,
-                3,
-                gl::FLOAT,
-                gl::FALSE,
-                (8 * mem::size_of::<T>()) as i32,
-                ptr::null(),
-            );
-            gl::EnableVertexAttribArray(0);
+            gl::VertexAttribPointer(index, size, gl::FLOAT, gl::FALSE, mem_size, start_mem);
+            gl::EnableVertexAttribArray(index);
         }
     }
 }

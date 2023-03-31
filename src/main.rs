@@ -3,7 +3,7 @@ mod cgl;
 use cgl::array_object::ArrayObject;
 use cgl::buffer::Buffer;
 use cgl::shader::{Program, Shader};
-use gl::types::{GLfloat, GLubyte, GLuint, GLvoid};
+use gl::types::{GLfloat, GLuint};
 use glfw::{Action, Context, Key};
 use std::{mem, ptr};
 
@@ -76,37 +76,9 @@ fn main() {
         -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
     ];
     vbo.load_data(triangle);
-    unsafe {
-        gl::VertexAttribPointer(
-            0,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            (8 * mem::size_of::<GLfloat>()) as i32,
-            ptr::null(),
-        );
-        gl::EnableVertexAttribArray(0);
-
-        gl::VertexAttribPointer(
-            1,
-            3,
-            gl::FLOAT,
-            gl::FALSE,
-            (8 * mem::size_of::<GLfloat>()) as i32,
-            (3 * mem::size_of::<GLfloat>()) as *const GLvoid,
-        );
-        gl::EnableVertexAttribArray(1);
-
-        gl::VertexAttribPointer(
-            2,
-            2,
-            gl::FLOAT,
-            gl::FALSE,
-            (8 * mem::size_of::<GLfloat>()) as i32,
-            (6 * mem::size_of::<GLfloat>()) as *const GLvoid,
-        );
-        gl::EnableVertexAttribArray(2);
-    }
+    Buffer::set_attrib_format::<GLfloat>(0, 3, 8, 0);
+    Buffer::set_attrib_format::<GLfloat>(1, 3, 8, 3);
+    Buffer::set_attrib_format::<GLfloat>(2, 2, 8, 6);
 
     let mut ebo = Buffer::new(gl::ELEMENT_ARRAY_BUFFER);
     let indices: Vec<GLuint> = vec![0, 1, 3, 1, 2, 3];
