@@ -3,9 +3,10 @@ mod cgl;
 use cgl::array_object::ArrayObject;
 use cgl::buffer::Buffer;
 use cgl::shader::{Program, Shader};
+use cgl::texture::Texture;
 use gl::types::{GLfloat, GLuint};
 use glfw::{Action, Context, Key};
-use std::{mem, ptr};
+use std::ptr;
 
 fn main() {
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -45,25 +46,9 @@ fn main() {
     f_shader.delete();
     yellow_f_shader.delete();
 
-    let tex_image = image::open("res/wall.jpg").unwrap();
-
-    let mut texture: GLuint = 0;
-    unsafe {
-        gl::GenTextures(1, &mut texture);
-        gl::BindTexture(gl::TEXTURE_2D, texture);
-        gl::TexImage2D(
-            gl::TEXTURE_2D,
-            0,
-            gl::RGB as i32,
-            tex_image.width() as i32,
-            tex_image.height() as i32,
-            0,
-            gl::RGB,
-            gl::UNSIGNED_BYTE,
-            mem::transmute(&(tex_image.into_bytes())[0]),
-        );
-        gl::GenerateMipmap(gl::TEXTURE_2D);
-    }
+    let texture = Texture::new("res/wall.jpg");
+    texture.bind_2d();
+    texture.load();
 
     let vao = ArrayObject::new();
     vao.bind();
