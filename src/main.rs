@@ -1,68 +1,14 @@
 mod cgl;
+mod ocean;
 
 extern crate nalgebra_glm as glm;
 
 use cgl::{ArrayObject, Buffer, Program, Shader, Texture};
 use gl::types::{GLfloat, GLuint};
 use glfw::{Action, Context, Key};
+use ocean::Camera;
 
 const CAMERA_SPEED: f32 = 7.5;
-
-struct Cursor {
-    x: f64,
-    y: f64,
-    yaw: f64,
-    pitch: f64,
-    sensitivity: f64,
-    first: bool,
-}
-
-struct Camera {
-    pos: glm::TVec3<f32>,
-    front: glm::TVec3<f32>,
-    up: glm::TVec3<f32>,
-    cursor: Cursor,
-}
-
-impl Camera {
-    fn get_view(&self) -> glm::TMat4<f32> {
-        glm::look_at(&self.pos, &(self.pos + self.front), &self.up)
-    }
-
-    fn get_right(&self) -> glm::TVec3<f32> {
-        glm::cross(&self.front, &self.up)
-    }
-
-    fn update_cursor(&mut self, new_pos: (f64, f64)) {
-        if self.cursor.first {
-            println!("adjusting first");
-            (self.cursor.x, self.cursor.y) = new_pos;
-            self.cursor.first = false;
-        }
-
-        let offset = (new_pos.0 - self.cursor.x, self.cursor.y - new_pos.1);
-        (self.cursor.x, self.cursor.y) = new_pos;
-
-        self.cursor.yaw += offset.0 * self.cursor.sensitivity;
-        self.cursor.pitch += offset.1 * self.cursor.sensitivity;
-
-        if self.cursor.yaw >= 89. {
-            self.cursor.yaw = 89.
-        }
-        if self.cursor.pitch <= -89. {
-            self.cursor.pitch = -89.
-        }
-
-        let direction = glm::vec3(
-            (self.cursor.yaw.cos() * self.cursor.pitch.cos()) as f32,
-            self.cursor.pitch.sin() as f32,
-            (self.cursor.yaw.sin() * self.cursor.pitch.cos()) as f32,
-        );
-        println!("from: {:?}", self.front);
-        self.front = glm::normalize(&direction);
-        println!("to: {:?}", self.front);
-    }
-}
 
 fn main() {
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -185,19 +131,11 @@ fn main() {
         glm::vec3(-1.3, 1.0, -1.5),
     ];
 
-    let mut camera = Camera {
-        pos: glm::vec3(0., 0., 3.),
-        front: glm::vec3(0., 0., -1.),
-        up: glm::vec3(0., 1., 0.),
-        cursor: Cursor {
-            x: 400.,
-            y: 300.,
-            yaw: 0.,
-            pitch: 0.,
-            sensitivity: 0.01,
-            first: true,
-        },
-    };
+    let mut camera = Camera::new(
+        glm::vec3(0., 0., 3.),
+        glm::vec3(0., 0., -1.),
+        glm::vec3(0., 1., 0.),
+    );
 
     vao.bind();
     let mut last_time: f32 = 0.;
@@ -244,8 +182,6 @@ fn handle_events(
     let speed = CAMERA_SPEED * delta;
 
     for (_, event) in glfw::flush_messages(&events) {
-        println!("{:?}", event);
-
         match event {
             glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
                 window.set_should_close(true);
