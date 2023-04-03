@@ -7,6 +7,7 @@ pub struct Camera {
     pub front: CVec,
     pub up: CVec,
     cursor: Cursor,
+    pub speed: f32,
 }
 
 impl Camera {
@@ -16,6 +17,7 @@ impl Camera {
             front,
             up,
             cursor: Cursor::new(800., 600., 0.01),
+            speed: 7.5,
         }
     }
 

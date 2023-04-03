@@ -1,28 +1,18 @@
+mod app_config;
 mod cgl;
+mod event_handling;
 mod ocean;
 
 extern crate nalgebra_glm as glm;
 
+use app_config::AppConfig;
 use cgl::{ArrayObject, Buffer, Program, Shader, Texture};
 use gl::types::{GLfloat, GLuint};
-use glfw::{Action, Context, Key};
+use glfw::Context;
 use ocean::Camera;
 
-const CAMERA_SPEED: f32 = 7.5;
-
 fn main() {
-    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-
-    let (mut window, events) = glfw
-        .create_window(800, 600, "Hello STR", glfw::WindowMode::Windowed)
-        .expect("Failed to create window");
-
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_cursor_mode(glfw::CursorMode::Disabled);
-    window.set_cursor_pos_polling(true);
-
-    gl::load_with(|s| glfw.get_proc_address_raw(s));
+    let mut app = AppConfig::new();
 
     unsafe {
         gl::Viewport(0, 0, 800, 600);
@@ -139,7 +129,7 @@ fn main() {
 
     vao.bind();
     let mut last_time: f32 = 0.;
-    while !window.should_close() {
+    while !app.window.should_close() {
         unsafe {
             gl::ClearColor(0.5, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
@@ -148,7 +138,7 @@ fn main() {
         let view_data = camera.get_view();
         view.load_mat4(view_data.as_ptr());
 
-        let time = glfw.get_time() as f32;
+        let time = app.get_time() as f32;
         let delta = time - last_time;
         last_time = time;
 
@@ -166,43 +156,8 @@ fn main() {
             }
         }
 
-        handle_events(&mut glfw, &mut window, &events, &mut camera, delta);
+        event_handling::handle_events(&mut app, &mut camera, delta);
 
-        window.swap_buffers();
+        app.window.swap_buffers();
     }
-}
-
-fn handle_events(
-    glfw: &mut glfw::Glfw,
-    window: &mut glfw::Window,
-    events: &std::sync::mpsc::Receiver<(f64, glfw::WindowEvent)>,
-    camera: &mut Camera,
-    delta: f32,
-) {
-    let speed = CAMERA_SPEED * delta;
-
-    for (_, event) in glfw::flush_messages(&events) {
-        match event {
-            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                window.set_should_close(true);
-            }
-            glfw::WindowEvent::Key(Key::W, _, Action::Press | Action::Repeat, _) => {
-                camera.pos += speed * camera.front;
-            }
-            glfw::WindowEvent::Key(Key::S, _, Action::Press | Action::Repeat, _) => {
-                camera.pos -= speed * camera.front;
-            }
-            glfw::WindowEvent::Key(Key::A, _, Action::Press | Action::Repeat, _) => {
-                camera.pos -= glm::normalize(&camera.get_right()) * speed;
-            }
-            glfw::WindowEvent::Key(Key::D, _, Action::Press | Action::Repeat, _) => {
-                camera.pos += glm::normalize(&camera.get_right()) * speed;
-            }
-            glfw::WindowEvent::CursorPos(x, y) => {
-                camera.update_cursor((x, y));
-            }
-            _ => {}
-        }
-    }
-    glfw.poll_events();
 }
