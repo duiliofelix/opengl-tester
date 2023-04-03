@@ -2,10 +2,7 @@ mod cgl;
 
 extern crate nalgebra_glm as glm;
 
-use cgl::array_object::ArrayObject;
-use cgl::buffer::Buffer;
-use cgl::shader::{Program, Shader};
-use cgl::texture::Texture;
+use cgl::{ArrayObject, Buffer, Program, Shader, Texture};
 use gl::types::{GLfloat, GLuint};
 use glfw::{Action, Context, Key};
 
@@ -87,25 +84,17 @@ fn main() {
 
     let mut v_shader = Shader::new("res/vertex.glsl", gl::VERTEX_SHADER);
     let mut f_shader = Shader::new("res/fragment.glsl", gl::FRAGMENT_SHADER);
-    let mut yellow_f_shader = Shader::new("res/yellow.fragment.glsl", gl::FRAGMENT_SHADER);
     let program = Program::new();
-    // let program2 = Program::new();
 
     v_shader.compile();
     f_shader.compile();
-    yellow_f_shader.compile();
 
     program.attach(&v_shader);
     program.attach(&f_shader);
     program.link();
 
-    /*program2.attach(&v_shader);
-    program2.attach(&yellow_f_shader);
-    program2.link();*/
-
     v_shader.delete();
     f_shader.delete();
-    yellow_f_shader.delete();
 
     let texture = Texture::new("res/wall.jpg");
     texture.bind_2d();
@@ -161,20 +150,25 @@ fn main() {
     let indices: Vec<GLuint> = vec![0, 1, 3, 1, 2, 3];
     ebo.load_data(indices);
 
+    program.activate();
+    let model = program
+        .get_uniform_location("model")
+        .expect("uniform model not found");
+    let view = program
+        .get_uniform_location("view")
+        .expect("uniform view not found");
+    let projection = program
+        .get_uniform_location("projection")
+        .expect("uniform projection not found");
+
+    let projection_data = glm::perspective(45.0_f32.to_radians(), 800. / 600., 0.1, 100.);
+    projection.load_mat4(projection_data.as_ptr());
+
     /*unsafe {
         gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
     }*/
 
-    program.activate();
-    let model_loc = program.get_uniform_location("model");
-    let view_loc = program.get_uniform_location("viewr");
-    let projection_loc = program.get_uniform_location("projection");
-
-    let projection = glm::perspective(45.0_f32.to_radians(), 800. / 600., 0.1, 100.);
-
     unsafe {
-        gl::UniformMatrix4fv(projection_loc, 1, gl::FALSE, projection.as_ptr());
-
         gl::Enable(gl::DEPTH_TEST);
     }
 
@@ -208,27 +202,27 @@ fn main() {
     vao.bind();
     let mut last_time: f32 = 0.;
     while !window.should_close() {
-        let time = glfw.get_time() as f32;
-        let view = camera.get_view();
-
-        let delta = time - last_time;
-        last_time = time;
-
         unsafe {
-            gl::UniformMatrix4fv(view_loc, 1, gl::FALSE, view.as_ptr());
             gl::ClearColor(0.5, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
+        let view_data = camera.get_view();
+        view.load_mat4(view_data.as_ptr());
+
+        let time = glfw.get_time() as f32;
+        let delta = time - last_time;
+        last_time = time;
+
         for (index, position) in positions.iter().enumerate() {
-            let model = glm::translation(&position);
-            let model = glm::rotate(
-                &model,
+            let model_data = glm::translation(&position);
+            let model_data = glm::rotate(
+                &model_data,
                 ((index as f32) * 20.0_f32).to_radians(),
                 &glm::vec3(1.0, 0.3, 0.5),
             );
+            model.load_mat4(model_data.as_ptr());
             unsafe {
-                gl::UniformMatrix4fv(model_loc, 1, gl::FALSE, model.as_ptr());
                 gl::DrawArrays(gl::TRIANGLES, 0, 36);
                 // gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
             }
