@@ -1,4 +1,4 @@
-use gl::types::{GLenum, GLuint};
+use gl::types::{GLenum, GLint, GLuint};
 use std::{ffi::CString, fs, ptr};
 
 pub struct Shader {
@@ -91,6 +91,17 @@ impl Program {
     pub fn activate(&self) {
         unsafe {
             gl::UseProgram(self.id);
+        }
+    }
+
+    pub fn get_uniform_location(&self, name: &str) -> GLint {
+        unsafe {
+            let location = gl::GetUniformLocation(self.id, name.to_string().as_ptr() as *const i8);
+            if location == -1 {
+                println!("Uniform '{}' not found", name);
+            }
+
+            location
         }
     }
 }
