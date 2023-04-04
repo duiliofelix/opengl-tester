@@ -1,5 +1,6 @@
 use gl::types::GLint;
 
+#[derive(Debug)]
 pub struct Uniform {
     pub id: GLint,
 }
