@@ -16,7 +16,7 @@ impl Camera {
             pos,
             front,
             up,
-            cursor: Cursor::new(800., 600., 0.01),
+            cursor: Cursor::new(800., 600., 0.1),
             speed: 7.5,
         }
     }
@@ -49,9 +49,9 @@ impl Camera {
         }
 
         let direction = glm::vec3(
-            (self.cursor.yaw.cos() * self.cursor.pitch.cos()) as f32,
-            self.cursor.pitch.sin() as f32,
-            (self.cursor.yaw.sin() * self.cursor.pitch.cos()) as f32,
+            (self.cursor.yaw.to_radians().sin() * self.cursor.pitch.to_radians().cos()) as f32,
+            self.cursor.pitch.to_radians().sin() as f32,
+            (-self.cursor.yaw.to_radians().cos() * self.cursor.pitch.to_radians().cos()) as f32,
         );
         self.front = glm::normalize(&direction);
     }

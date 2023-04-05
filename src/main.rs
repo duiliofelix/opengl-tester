@@ -183,21 +183,10 @@ fn main() {
         gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
     }*/
 
-    let positions = vec![
-        glm::vec3(0.0, 0.0, 0.0),
-        glm::vec3(2.0, 5.0, -15.0),
-        glm::vec3(-1.5, -2.2, -2.5),
-        glm::vec3(-3.8, -2.0, -12.3),
-        glm::vec3(2.4, -0.4, -3.5),
-        glm::vec3(-1.7, 3.0, -7.5),
-        glm::vec3(1.3, -2.0, -2.5),
-        glm::vec3(1.5, 2.0, -2.5),
-        glm::vec3(1.5, 0.2, -1.5),
-        glm::vec3(-1.3, 1.0, -1.5),
-    ];
+    let positions = vec![glm::vec3(0.0, 0.0, -5.0), glm::vec3(5.0, 0.0, 0.0)];
 
     let mut camera = Camera::new(
-        glm::vec3(0., 0., 3.),
+        glm::vec3(0., 0., 0.),
         glm::vec3(0., 0., -1.),
         glm::vec3(0., 1., 0.),
     );
@@ -208,7 +197,7 @@ fn main() {
         let box_view = glm::mat3_to_mat4(&glm::mat4_to_mat3(&view_data));
 
         unsafe {
-            gl::ClearColor(0.5, 0.1, 0.1, 1.0);
+            gl::ClearColor(0.1, 0.1, 0.1, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             gl::Disable(gl::DEPTH_TEST);
         }
