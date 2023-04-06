@@ -17,7 +17,7 @@ impl Buffer {
         Buffer { id, buffer_type }
     }
 
-    pub fn load_data<T>(&mut self, data: Vec<T>) {
+    pub fn load_data<T>(&self, data: &Vec<T>) {
         let type_size = mem::size_of::<T>();
 
         unsafe {

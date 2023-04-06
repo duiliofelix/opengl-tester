@@ -7,7 +7,7 @@ extern crate nalgebra_glm as glm;
 
 use app_config::AppConfig;
 use cgl::{ArrayObject, Buffer, Program, Shader, Texture};
-use gl::types::{GLfloat, GLuint};
+use gl::types::GLfloat;
 use glfw::Context;
 use ocean::Camera;
 
@@ -64,7 +64,7 @@ fn main() {
     let skybox_vao = ArrayObject::new();
     skybox_vao.bind();
 
-    let mut skybox_vbo = Buffer::new(gl::ARRAY_BUFFER);
+    let skybox_vbo = Buffer::new(gl::ARRAY_BUFFER);
     let skybox_vertex: Vec<GLfloat> = vec![
         -1.0, 1.0, -1.0, // yaya
         -1.0, -1.0, -1.0, // yaya
@@ -103,58 +103,11 @@ fn main() {
         -1.0, -1.0, 1.0, // yaya
         1.0, -1.0, 1.0, // yaya
     ];
-    skybox_vbo.load_data(skybox_vertex);
+    skybox_vbo.load_data(&skybox_vertex);
     Buffer::set_attrib_format::<GLfloat>(0, 3, 3, 0);
 
-    let vao = ArrayObject::new();
-    vao.bind();
-
-    let mut vbo = Buffer::new(gl::ARRAY_BUFFER);
-    let triangle: Vec<GLfloat> = vec![
-        -0.5, -0.5, -0.5, 0.0, 0.0, // yaya
-        0.5, -0.5, -0.5, 1.0, 0.0, // yaya
-        0.5, 0.5, -0.5, 1.0, 1.0, // yaya
-        0.5, 0.5, -0.5, 1.0, 1.0, // yaya
-        -0.5, 0.5, -0.5, 0.0, 1.0, // yaya
-        -0.5, -0.5, -0.5, 0.0, 0.0, // yaya
-        -0.5, -0.5, 0.5, 0.0, 0.0, // yaya
-        0.5, -0.5, 0.5, 1.0, 0.0, // yaya
-        0.5, 0.5, 0.5, 1.0, 1.0, // yaya
-        0.5, 0.5, 0.5, 1.0, 1.0, // yaya
-        -0.5, 0.5, 0.5, 0.0, 1.0, // yaya
-        -0.5, -0.5, 0.5, 0.0, 0.0, // yaya
-        -0.5, 0.5, 0.5, 1.0, 0.0, // yaya
-        -0.5, 0.5, -0.5, 1.0, 1.0, // yaya
-        -0.5, -0.5, -0.5, 0.0, 1.0, // yaya
-        -0.5, -0.5, -0.5, 0.0, 1.0, // yaya
-        -0.5, -0.5, 0.5, 0.0, 0.0, // yaya
-        -0.5, 0.5, 0.5, 1.0, 0.0, // yaya
-        0.5, 0.5, 0.5, 1.0, 0.0, // yaya
-        0.5, 0.5, -0.5, 1.0, 1.0, // yaya
-        0.5, -0.5, -0.5, 0.0, 1.0, // yaya
-        0.5, -0.5, -0.5, 0.0, 1.0, // yaya
-        0.5, -0.5, 0.5, 0.0, 0.0, // yaya
-        0.5, 0.5, 0.5, 1.0, 0.0, // yaya
-        -0.5, -0.5, -0.5, 0.0, 1.0, // yaya
-        0.5, -0.5, -0.5, 1.0, 1.0, // yaya
-        0.5, -0.5, 0.5, 1.0, 0.0, // yaya
-        0.5, -0.5, 0.5, 1.0, 0.0, // yaya
-        -0.5, -0.5, 0.5, 0.0, 0.0, // yaya
-        -0.5, -0.5, -0.5, 0.0, 1.0, // yaya
-        -0.5, 0.5, -0.5, 0.0, 1.0, // yaya
-        0.5, 0.5, -0.5, 1.0, 1.0, // yaya
-        0.5, 0.5, 0.5, 1.0, 0.0, // yaya
-        0.5, 0.5, 0.5, 1.0, 0.0, // yaya
-        -0.5, 0.5, 0.5, 0.0, 0.0, // yaya
-        -0.5, 0.5, -0.5, 0.0, 1.0, // yaya
-    ];
-    vbo.load_data(triangle);
-    Buffer::set_attrib_format::<GLfloat>(0, 3, 5, 0);
-    Buffer::set_attrib_format::<GLfloat>(1, 2, 5, 3);
-
-    let mut ebo = Buffer::new(gl::ELEMENT_ARRAY_BUFFER);
-    let indices: Vec<GLuint> = vec![0, 1, 3, 1, 2, 3];
-    ebo.load_data(indices);
+    let mut backpack = ocean::model::Model::new();
+    backpack.load_obj();
 
     program.activate();
     let model = program
@@ -167,6 +120,8 @@ fn main() {
         .get_uniform_location("projection")
         .expect("uniform projection not found");
 
+    let model_data = glm::translation(&glm::vec3(0., 0., 2.));
+    model.load_mat4(model_data.as_ptr());
     let projection_data = glm::perspective(45.0_f32.to_radians(), 800. / 600., 0.1, 100.);
     projection.load_mat4(projection_data.as_ptr());
 
@@ -182,8 +137,6 @@ fn main() {
     /*unsafe {
         gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
     }*/
-
-    let positions = vec![glm::vec3(0.0, 0.0, -5.0), glm::vec3(5.0, 0.0, 0.0)];
 
     let mut camera = Camera::new(
         glm::vec3(0., 0., 0.),
@@ -213,28 +166,12 @@ fn main() {
         }
 
         program.activate();
-        vao.bind();
-        texture.bind_2d();
-
         view.load_mat4(view_data.as_ptr());
+        backpack.draw();
 
         let time = app.get_time() as f32;
         let delta = time - last_time;
         last_time = time;
-
-        for (index, position) in positions.iter().enumerate() {
-            let model_data = glm::translation(&position);
-            let model_data = glm::rotate(
-                &model_data,
-                ((index as f32) * 20.0_f32).to_radians(),
-                &glm::vec3(1.0, 0.3, 0.5),
-            );
-            model.load_mat4(model_data.as_ptr());
-            unsafe {
-                gl::DrawArrays(gl::TRIANGLES, 0, 36);
-                // gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
-            }
-        }
 
         event_handling::handle_events(&mut app, &mut camera, delta);
 
