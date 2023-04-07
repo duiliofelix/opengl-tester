@@ -2,8 +2,9 @@ use crate::cgl::{ArrayObject, Buffer, Texture};
 
 pub struct Mesh {
     vao: ArrayObject,
-    vbo: Buffer,
-    color: Buffer,
+    vertex_buffer: Buffer,
+    normal_buffer: Buffer,
+    tex_pos_buffer: Buffer,
     ebo: Buffer,
 
     index_count: usize,
@@ -13,8 +14,9 @@ impl Mesh {
     pub fn new() -> Mesh {
         Mesh {
             vao: ArrayObject::new(),
-            vbo: Buffer::new(gl::ARRAY_BUFFER),
-            color: Buffer::new(gl::ARRAY_BUFFER),
+            vertex_buffer: Buffer::new(gl::ARRAY_BUFFER),
+            normal_buffer: Buffer::new(gl::ARRAY_BUFFER),
+            tex_pos_buffer: Buffer::new(gl::ARRAY_BUFFER),
             ebo: Buffer::new(gl::ELEMENT_ARRAY_BUFFER),
 
             index_count: 0,
@@ -65,25 +67,34 @@ impl Model {
             let mut mesh = Mesh::new();
 
             mesh.vao.bind();
-            mesh.vbo.load_data(&model.mesh.positions);
+            mesh.vertex_buffer.load_data(&model.mesh.positions);
             Buffer::set_attrib_format::<gl::types::GLfloat>(0, 3, 3, 0);
-            mesh.color.load_data(&model.mesh.texcoords);
-            Buffer::set_attrib_format::<gl::types::GLfloat>(1, 2, 2, 0);
+            mesh.tex_pos_buffer.load_data(&model.mesh.normals);
+            Buffer::set_attrib_format::<gl::types::GLfloat>(1, 3, 3, 0);
+            mesh.tex_pos_buffer.load_data(&model.mesh.texcoords);
+            Buffer::set_attrib_format::<gl::types::GLfloat>(2, 2, 2, 0);
             mesh.ebo.load_data(&model.mesh.indices);
             mesh.index_count = model.mesh.indices.len();
 
             self.meshs.push(mesh);
         }
 
-        println!("{:?}", materials[0].diffuse_texture);
         self.diffuse_tex.bind_2d();
         self.diffuse_tex.load_2d("res/backpack/diffuse.jpg");
         //self.normal_tex.load_2d("res/backpack/normal.png");
-        //self.specular_tex.load_2d("res/backpack/specular.jpg");
+        self.specular_tex.bind_2d();
+        self.specular_tex.load_2d("res/backpack/specular.jpg");
     }
 
     pub fn draw(&self) {
+        unsafe {
+            gl::ActiveTexture(gl::TEXTURE0);
+        }
         self.diffuse_tex.bind_2d();
+        unsafe {
+            gl::ActiveTexture(gl::TEXTURE1);
+        }
+        self.specular_tex.bind_2d();
 
         for mesh in self.meshs.iter() {
             mesh.draw();

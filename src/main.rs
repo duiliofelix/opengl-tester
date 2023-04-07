@@ -22,8 +22,8 @@ fn main() {
     let mut f_shader = Shader::new("res/fragment.glsl", gl::FRAGMENT_SHADER);
     let program = Program::new();
 
-    v_shader.compile();
-    f_shader.compile();
+    v_shader.compile().unwrap();
+    f_shader.compile().unwrap();
 
     program.attach(&v_shader);
     program.attach(&f_shader);
@@ -40,8 +40,8 @@ fn main() {
     let mut f_shader = Shader::new("res/skybox.fragment.glsl", gl::FRAGMENT_SHADER);
     let program2 = Program::new();
 
-    v_shader.compile();
-    f_shader.compile();
+    v_shader.compile().unwrap();
+    f_shader.compile().unwrap();
 
     program2.attach(&v_shader);
     program2.attach(&f_shader);
@@ -110,15 +110,25 @@ fn main() {
     backpack.load_obj();
 
     program.activate();
-    let model = program
-        .get_uniform_location("model")
-        .expect("uniform model not found");
-    let view = program
-        .get_uniform_location("view")
-        .expect("uniform view not found");
-    let projection = program
-        .get_uniform_location("projection")
-        .expect("uniform projection not found");
+    let model = program.get_uniform_location("model").unwrap();
+    let view = program.get_uniform_location("view").unwrap();
+    let view_pos = program.get_uniform_location("viewPos").unwrap();
+    let projection = program.get_uniform_location("projection").unwrap();
+    let mat_diffuse = program.get_uniform_location("material.diffuse").unwrap();
+    let mat_specular = program.get_uniform_location("material.specular").unwrap();
+    let mat_shininess = program.get_uniform_location("material.shininess").unwrap();
+    let light_pos = program.get_uniform_location("light.position").unwrap();
+    let light_ambient = program.get_uniform_location("light.ambient").unwrap();
+    let light_diffuse = program.get_uniform_location("light.diffuse").unwrap();
+    let light_specular = program.get_uniform_location("light.specular").unwrap();
+
+    mat_diffuse.load_i32(0);
+    mat_specular.load_i32(1);
+    mat_shininess.load_f32(64.);
+    light_pos.load_vec3(1.2, 1., 2.);
+    light_ambient.load_vec3(0.2, 0.2, 0.2);
+    light_diffuse.load_vec3(0.5, 0.5, 0.5);
+    light_specular.load_vec3(1.0, 1.0, 1.0);
 
     let model_data = glm::translation(&glm::vec3(0., 0., 2.));
     model.load_mat4(model_data.as_ptr());
@@ -148,6 +158,8 @@ fn main() {
     while !app.window.should_close() {
         let view_data = camera.get_view();
         let box_view = glm::mat3_to_mat4(&glm::mat4_to_mat3(&view_data));
+
+        view_pos.load_glm_vec3(&camera.pos);
 
         unsafe {
             gl::ClearColor(0.1, 0.1, 0.1, 1.0);
